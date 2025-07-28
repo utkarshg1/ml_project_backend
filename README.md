@@ -16,7 +16,6 @@ A FastAPI-based REST API for classifying Iris flower species using machine learn
 - [Testing](#-testing)
 - [Deployment](#-deployment)
 - [Performance](#-performance)
-- [Contributing](#-contributing)
 - [Author](#-author)
 
 ## 🌸 Overview
