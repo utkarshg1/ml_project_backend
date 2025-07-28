@@ -1,27 +1,32 @@
+# Use slim Python base image
 FROM python:3.11-slim
 
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install curl and uv
+# Install system dependencies
 RUN apt-get update && \
-    apt-get install -y curl && \
-    curl -Ls https://astral.sh/uv/install.sh | bash && \
-    mv ~/.cargo/bin/uv /usr/local/bin/uv && \
-    apt-get purge -y curl && \
+    apt-get install -y build-essential && \
     rm -rf /var/lib/apt/lists/*
 
+# Install uv using pip (Python-based version)
+RUN pip install uv
+
+# Set working directory
 WORKDIR /app
 
-# Copy dependencies
+# Copy dependency files first (for Docker cache)
 COPY pyproject.toml uv.lock* ./
 
-# Install dependencies
+# Install Python dependencies using uv
 RUN uv sync
 
-# Copy source code
+# Copy the rest of your code
 COPY . .
 
+# Expose FastAPI default port
 EXPOSE 8000
 
+# Run the FastAPI app using uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
