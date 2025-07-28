@@ -23,7 +23,6 @@ def generate_project_structure():
         Path("data", ".gitkeep"),
         Path("models", ".gitkeep"),
         Path("service.py"),
-        Path("api.py"),
     ]
 
     # create directories first

@@ -1,11 +1,19 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+import pandas as pd
 from pydantic import BaseModel
 from typing import List, Dict
-import pandas as pd
 from src.predict import IrisPredictor
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Iris Classifier API")
 predictor = IrisPredictor()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Input model for a single sample
