@@ -1,6 +1,7 @@
 numpy
 pandas
 joblib
+loguru
 requests
 fastapi
 uvicorn
