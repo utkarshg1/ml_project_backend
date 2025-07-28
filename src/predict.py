@@ -18,6 +18,7 @@ class IrisPredictor:
     def __init__(self, model_path: Path = MODEL_PATH) -> None:
         self.model_path = model_path
         self.model = load_model(self.model_path)
+        self.classes = self.model.classes_
 
     def to_dataframe(
         self, sep_len: float, sep_wid: float, pet_len: float, pet_wid: float
@@ -42,7 +43,14 @@ class IrisPredictor:
 
     def predict_proba(self, x: pd.DataFrame):
         probs = self.model.predict_proba(x)
-        classes = self.model.classes_
-        probs_df = pd.DataFrame(probs, columns=classes)
+        probs_df = pd.DataFrame(probs, columns=self.classes)
         logger.info(f"Predicted probabilities :\n{probs_df}")
         return probs_df.round(4)
+
+    def predict_batch(self, x: pd.DataFrame):
+        preds = self.model.predict(x)
+        probs = self.model.predict_proba(x)
+        probs_df = pd.DataFrame(probs, columns=self.classes).round(4)
+        probs_df.insert(0, "prediction", preds)
+        logger.info(f"Batch prediction results :\n{probs_df}")
+        return probs_df
