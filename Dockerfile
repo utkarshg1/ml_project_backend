@@ -1,30 +1,18 @@
-# 🧱 Stage 1: Builder using uv for dependency resolution
-FROM python:3.12-slim-bookworm AS builder
+# Simple Dockerfile with uv - copy everything and sync
+FROM python:3.12-slim-bookworm
 
-# Copy uv binary
+# Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Copy lockfile and dependencies manifest
-COPY pyproject.toml uv.lock* /app/
+# Copy all files
+COPY . .
 
-# Install dependencies (without project code) for cache efficiency
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-install-project
+# Install dependencies with uv
+RUN uv sync
 
-# Copy code and sync project (non-editable)
-COPY . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked
-
-# 🧱 Stage 2: Final slimmer runtime image
-FROM python:3.12-slim-bookworm AS runtime
-
-WORKDIR /app
-COPY --from=builder /app /app
-
-# Make sure project's virtualenv is in PATH
+# Make sure we use the virtual environment
 ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
