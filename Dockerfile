@@ -1,32 +1,32 @@
-# Use slim Python base image
-FROM python:3.11-slim
+# 🧱 Stage 1: Builder using uv for dependency resolution
+FROM python:3.12-slim-bookworm AS builder
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Copy uv binary
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-# Install system dependencies
-RUN apt-get update && \
-    apt-get install -y build-essential && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install uv using pip (Python-based version)
-RUN pip install uv
-
-# Set working directory
 WORKDIR /app
 
-# Copy dependency files first (for Docker cache)
-COPY pyproject.toml uv.lock* ./
+# Copy lockfile and dependencies manifest
+COPY pyproject.toml uv.lock* /app/
 
-# Install Python dependencies using uv
-RUN uv sync
+# Install dependencies (without project code) for cache efficiency
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-install-project
 
-# Copy the rest of your code
-COPY . .
+# Copy code and sync project (non-editable)
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked
 
-# Expose FastAPI default port
+# 🧱 Stage 2: Final slimmer runtime image
+FROM python:3.12-slim-bookworm AS runtime
+
+WORKDIR /app
+COPY --from=builder /app /app
+
+# Make sure project's virtualenv is in PATH
+ENV PATH="/app/.venv/bin:$PATH"
+
 EXPOSE 8000
 
-# Run the FastAPI app using uvicorn
-CMD ["uvicorn", "service:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "service:app", "--host", "0.0.0.0", "--port", "8000"]
